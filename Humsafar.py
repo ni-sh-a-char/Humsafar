@@ -1,100 +1,84 @@
-import sys
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtWidgets import QApplication, QMainWindow, QToolBar, QLineEdit, QPushButton, QVBoxLayout, QWidget, QSizePolicy, QProgressBar
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
+from kivy.app import App
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.button import Button
+from kivy.uix.progressbar import ProgressBar
+from kivy.uix.WebView import WebView
 
-class BrowserWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.browser = QWebEngineView()
-        self.browser.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.browser.setUrl(QUrl("https://duckduckgo.com"))  # Set DuckDuckGo as the initial URL
-        self.setCentralWidget(self.browser)
+class BrowserWindow(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.orientation = 'vertical'
 
-        # Set dark theme (you can customize the colors)
-        dark_theme = "QWebEngineView { background-color: #121212; color: #FFFFFF; }"
-        self.browser.setStyleSheet(dark_theme)
+        # Create a WebView for the browser
+        self.browser = WebView(url="https://duckduckgo.com")
+        self.add_widget(self.browser)
+
+        # Create an address bar
+        self.address_bar = TextInput(hint_text="Enter URL or search")
+        self.add_widget(self.address_bar)
 
         # Create a navigation toolbar
-        nav_toolbar = QToolBar("Navigation")
-        self.addToolBar(nav_toolbar)
+        nav_toolbar = BoxLayout()
+        self.add_widget(nav_toolbar)
 
-        # Add an address bar for entering URLs or search queries
-        self.address_bar = QLineEdit()
-        nav_toolbar.addWidget(self.address_bar)
+        # Create a "Go" button
+        go_button = Button(text="Go/Search")
+        go_button.bind(on_press=self.navigate_or_search)
+        nav_toolbar.add_widget(go_button)
 
-        # Add a "Go" button to navigate to the entered URL or perform searches
-        go_button = QPushButton("Go/Search")
-        go_button.clicked.connect(self.navigate_or_search)
-        nav_toolbar.addWidget(go_button)
+        # Create a progress bar
+        self.progress_bar = ProgressBar(max=100)
+        self.progress_bar.opacity = 0  # Initially hidden
+        nav_toolbar.add_widget(self.progress_bar)
 
-        # Connect Enter key press to navigate or search
-        self.address_bar.returnPressed.connect(self.navigate_or_search)
+        # Create reload and abort buttons
+        reload_button = Button(text="Reload")
+        reload_button.bind(on_press=self.reload_page)
+        nav_toolbar.add_widget(reload_button)
 
-        # Add a progress bar
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.progress_bar.setVisible(False)
-        nav_toolbar.addWidget(self.progress_bar)
+        abort_button = Button(text="Abort")
+        abort_button.bind(on_press=self.abort_loading)
+        nav_toolbar.add_widget(abort_button)
 
-        # Add a reload button
-        reload_button = QPushButton("Reload")
-        reload_button.clicked.connect(self.reload_page)
-        nav_toolbar.addWidget(reload_button)
+        # Create back and forward buttons
+        back_button = Button(text="Back")
+        back_button.bind(on_press=self.browser.go_back)
+        nav_toolbar.add_widget(back_button)
 
-        # Add an abort button
-        abort_button = QPushButton("Abort")
-        abort_button.clicked.connect(self.abort_loading)
-        nav_toolbar.addWidget(abort_button)
+        forward_button = Button(text="Forward")
+        forward_button.bind(on_press=self.browser.go_forward)
+        nav_toolbar.add_widget(forward_button)
 
-        # Add forward and backward buttons
-        nav_toolbar.addSeparator()
-        back_button = QPushButton("Back")
-        back_button.clicked.connect(self.browser.back)
-        nav_toolbar.addWidget(back_button)
-
-        forward_button = QPushButton("Forward")
-        forward_button.clicked.connect(self.browser.forward)
-        nav_toolbar.addWidget(forward_button)
-
-        # Connect the progress bar to page load events
-        self.browser.page().loadStarted.connect(self.start_loading)
-        self.browser.page().loadFinished.connect(self.finish_loading)
-
-        # Set the browser window title
-        self.setWindowTitle("Humsafar")
-
-    def navigate_or_search(self):
-        query = self.address_bar.text()
+    def navigate_or_search(self, instance):
+        query = self.address_bar.text
         if not query.startswith(("http://", "https://")):
             # If it's not a URL, perform a DuckDuckGo search
             search_url = f"https://duckduckgo.com/?q={query.replace(' ', '+')}"
-            self.browser.setUrl(QUrl(search_url))
+            self.browser.url = search_url
         else:
             # If it's a URL, navigate to the entered URL
-            self.browser.setUrl(QUrl(query))
+            self.browser.url = query
 
-    def start_loading(self):
-        # Show the progress bar when loading starts
-        self.progress_bar.setVisible(True)
-
-    def finish_loading(self):
-        # Hide the progress bar when loading is finished
-        self.progress_bar.setVisible(False)
-
-    def reload_page(self):
-        # Reload the current page
+    def reload_page(self, instance):
         self.browser.reload()
 
-    def abort_loading(self):
-        # Abort the current page loading
-        self.browser.page().triggerAction(QWebEnginePage.Stop)
+    def abort_loading(self, instance):
+        self.browser.stop_loading()
 
-def main():
-    app = QApplication(sys.argv)
-    window = BrowserWindow()
-    window.show()
-    sys.exit(app.exec_())
+    def on_progress(self, instance, value):
+        # Update the progress bar
+        self.progress_bar.value = value
+        if value == 100:
+            # Hide the progress bar when loading is finished
+            self.progress_bar.opacity = 0
+        else:
+            # Show the progress bar when loading starts
+            self.progress_bar.opacity = 1
+
+class BrowserApp(App):
+    def build(self):
+        return BrowserWindow()
 
 if __name__ == "__main__":
-    main()
+    BrowserApp().run()
