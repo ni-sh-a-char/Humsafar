@@ -1,6 +1,2 @@
-streamlit
-pandas
-matplotlib
-reportlab
-docx2txt
 PyQt5
+PyQtWebEngine
