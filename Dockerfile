@@ -21,4 +21,4 @@ EXPOSE 80
 
 # Define the command to run your application
 ENTRYPOINT ["streamlit", "run"]
-CMD ["CyberInveStiga.py", "--server.enableCORS=false", "--server.enableWebsocketCompression=false", "--server.enableXsrfProtection=false"]
+CMD ["Humsafar.py", "--server.enableCORS=false", "--server.enableWebsocketCompression=false", "--server.enableXsrfProtection=false"]
