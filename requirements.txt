@@ -1,7 +1,6 @@
 streamlit
-pyshark
 pandas
 matplotlib
 reportlab
 docx2txt
-scapy
+PyQt5
