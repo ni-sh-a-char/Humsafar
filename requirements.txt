@@ -1,2 +1,7 @@
-PyQt5 
-PyQtWebEngine
+streamlit
+pyshark
+pandas
+matplotlib
+reportlab
+docx2txt
+scapy
